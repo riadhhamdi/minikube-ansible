@@ -1,0 +1,42 @@
+- hosts: all 
+  tasks:
+  - name: Ensure all podman packages are removed 
+    yum:
+      name:
+        - podman 
+        - runc 
+      state: absent 
+  - name: Ensure docker-ce repository are configured 
+    get_url: 
+      url: "https://download.docker.com/linux/centos/docker-ce.repo"
+      dest: /etc/yum.repos.d/dockerce.repo 
+  - name: Ensure required packags are installed 
+    yum: 
+      name: 
+        - docker-ce 
+        - docker-ce-cli 
+        - containerd.io
+        - https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_8/x86_64/cri-tools-1.23.0-.el8.2.1.x86_64.rpm
+        - https://github.com/Mirantis/cri-dockerd/releases/download/v0.2.6/cri-dockerd-0.2.6-3.el8.x86_64.rpm
+        - conntrack-tools
+      disable_gpg_check: true 
+  - name: Ensure docker and cri-dockerd services are started and enabled 
+    service:
+      name: "{{item}}"
+      state: started 
+      enabled: true 
+    loop: 
+      - docker 
+      - cri-docker 
+
+  - name: Ensure minikube packages are copied 
+    get_url: 
+      url: " https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+      dest: /usr/local/bin/minikube
+      mode: '0755' 
+  #- name: deploy etc/hosts on the server (replacing DNS)
+  #  copy: 
+  #    src: etchosts
+  #    dest: /etc/hosts 
+  - name: Start minikube on the server 
+    shell: "minikube start --driver=none"
